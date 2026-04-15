@@ -586,10 +586,58 @@
 
   .pricing-container {
     display: grid;
-    grid-template-columns: 1fr 1.15fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
     margin-top: 4rem;
     align-items: start;
+  }
+
+  .pricing-usage-bar {
+    grid-column: 1 / -1;
+    background: var(--sage);
+    border: 1px solid rgba(201,168,76,0.4);
+    border-radius: 12px;
+    padding: 2rem 2.5rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .usage-bar-icon {
+    font-size: 2.2rem;
+    line-height: 1;
+  }
+
+  .usage-bar-text h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.02em;
+  }
+
+  .usage-bar-text p {
+    font-size: 0.9rem;
+    color: rgba(245,240,232,0.75);
+    line-height: 1.55;
+  }
+
+  .usage-bar-examples {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    text-align: right;
+  }
+
+  .usage-bar-examples span {
+    font-size: 0.82rem;
+    color: rgba(245,240,232,0.55);
+    white-space: nowrap;
+  }
+
+  .usage-bar-examples strong {
+    color: var(--cream);
   }
 
   .pricing-card {
@@ -604,7 +652,6 @@
   .pricing-card.featured {
     background: var(--sage);
     border: 1px solid var(--gold);
-    transform: scale(1.02);
   }
 
   .pricing-badge {
@@ -876,7 +923,8 @@
     .how-steps::before { display: none; }
     .features-grid { grid-template-columns: 1fr 1fr; }
     .pricing-container { grid-template-columns: 1fr; }
-    .pricing-card.featured { transform: none; }
+    .pricing-usage-bar { grid-template-columns: 1fr; text-align: left; }
+    .usage-bar-examples { text-align: left; flex-direction: row; flex-wrap: wrap; gap: 0.6rem; }
     .usecases-grid { grid-template-columns: 1fr 1fr; }
     .faq-grid { grid-template-columns: 1fr; }
     .stats-strip { grid-template-columns: repeat(2, 1fr); }
@@ -1137,7 +1185,7 @@
         <span class="price-amount">0</span>
         <span class="price-period">/ 14 days</span>
       </div>
-      <div class="price-note">No credit card required</div>
+      <div class="price-note" style="color:rgba(245,240,232,0.55);">Platform free · usage costs apply (see below)</div>
       <div class="price-divider"></div>
       <ul class="pricing-features">
         <li><span class="check">✓</span> Full platform access</li>
@@ -1145,9 +1193,123 @@
         <li><span class="check">✓</span> Auto knowledge base setup</li>
         <li><span class="check">✓</span> Live call testing (sandbox)</li>
         <li><span class="check">✓</span> Onboarding wizard</li>
-        <li class="muted"><span class="check">—</span> No setup fee during trial</li>
-        <li class="muted"><span class="check">—</span> $0.05/min AI usage applies</li>
+        <li><span class="check">✓</span> No setup fee during trial</li>
       </ul>
+      <a href="#start" class="btn-secondary" style="width:100%;justify-content:center;display:flex;">Start Free Trial</a>
+    </div>
+
+    <!-- Pro -->
+    <div class="pricing-card featured">
+      <div class="pricing-name">Pro Plan</div>
+      <div class="pricing-price">
+        <span class="price-dollar">$</span>
+        <span class="price-amount">19.99</span>
+        <span class="price-period">/ month</span>
+      </div>
+      <div class="price-note" style="display:flex;align-items:center;gap:0.5rem;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);border-radius:6px;padding:0.6rem 1rem;color:var(--gold);font-size:0.9rem;font-weight:500;margin-bottom:1rem;">
+        <span>🔧</span> + $249 one-time setup fee
+      </div>
+      <div class="price-divider"></div>
+      <ul class="pricing-features">
+        <li><span class="check">✓</span> Everything in Free Trial</li>
+        <li><span class="check">✓</span> Custom agent name &amp; persona</li>
+        <li><span class="check">✓</span> Unlimited call transcripts</li>
+        <li><span class="check">✓</span> SMS &amp; email notifications</li>
+        <li><span class="check">✓</span> Live admin dashboard &amp; analytics</li>
+        <li><span class="check">✓</span> Dedicated virtual phone number</li>
+        <li><span class="check">✓</span> Priority onboarding support</li>
+      </ul>
+      <a href="#start" class="btn-primary" style="width:100%;justify-content:center;display:flex;">Get Started ↗</a>
+    </div>
+
+    <!-- Usage bar — full width -->
+    <div class="pricing-usage-bar">
+      <div class="usage-bar-icon">📞</div>
+      <div class="usage-bar-text">
+        <h4>$0.05 / minute — applies to both plans</h4>
+        <p>This single charge covers your <strong style="color:var(--cream);">virtual phone line</strong> and <strong style="color:var(--cream);">AI processing</strong> for every call minute. It is not an add-on — it is the only usage cost you will ever see on your bill. No hidden fees, no surprises.</p>
+      </div>
+      <div class="usage-bar-examples">
+        <span>100 min/mo ≈ <strong>$5</strong></span>
+        <span>300 min/mo ≈ <strong>$15</strong></span>
+        <span>600 min/mo ≈ <strong>$30</strong></span>
+        <span style="color:rgba(245,240,232,0.35);font-size:0.76rem;margin-top:0.3rem;">Full breakdown in dashboard</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- USE CASES -->
+<section class="usecases" id="usecases">
+  <div class="section-tag">Who It's For</div>
+  <h2 class="section-title">Built for <em>service businesses</em><br>of every kind.</h2>
+
+  <div class="usecases-grid reveal">
+    <div class="usecase">
+      <div class="usecase-icon">🏥</div>
+      <h3>Medical & Dental Clinics</h3>
+      <p>Book patient appointments, answer hours and location queries, handle multiple appointment types by duration.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">💆</div>
+      <h3>Beauty & Wellness Centers</h3>
+      <p>Manage massage, skincare, and nail bookings with service-specific durations. Handle peak hour overflow automatically.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">🏨</div>
+      <h3>Hotels & Hospitality</h3>
+      <p>Answer room type queries, capture reservation intents, and route complex requests to your front desk staff.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">🍽️</div>
+      <h3>Restaurants</h3>
+      <p>Take table reservations, answer menu and allergy questions, and inform callers of daily specials from your knowledge base.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">🔧</div>
+      <h3>Auto Service & Repair</h3>
+      <p>Book service appointments, quote lead times for common jobs, and answer availability questions 24/7.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">⚖️</div>
+      <h3>Legal & Professional Offices</h3>
+      <p>Schedule consultations, screen initial inquiries, and ensure no prospective client call goes unanswered.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="section-tag">Simple Pricing</div>
+  <h2 class="section-title">Start for free.<br><em>Pay only when you're ready.</em></h2>
+  <p class="section-lead">A 14-day free trial — no credit card required. Then a transparent, flat monthly structure with no hidden per-call surprises (except AI usage).</p>
+
+  <div class="pricing-container reveal">
+
+    <!-- Trial -->
+    <div class="pricing-card">
+      <div class="pricing-name">Free Trial</div>
+      <div class="pricing-price">
+        <span class="price-dollar">$</span>
+        <span class="price-amount">0</span>
+        <span class="price-period">/ 14 days</span>
+      </div>
+      <div class="price-note" style="color:rgba(245,240,232,0.55);">Platform free · usage costs below apply</div>
+      <div class="price-divider"></div>
+      <ul class="pricing-features">
+        <li><span class="check">✓</span> Full platform access</li>
+        <li><span class="check">✓</span> Google Calendar integration</li>
+        <li><span class="check">✓</span> Auto knowledge base setup</li>
+        <li><span class="check">✓</span> Live call testing (sandbox)</li>
+        <li><span class="check">✓</span> Onboarding wizard</li>
+        <li><span class="check">✓</span> No setup fee during trial</li>
+      </ul>
+      <div style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.35);border-radius:8px;padding:1rem 1.1rem;margin-bottom:1.5rem;">
+        <p style="font-size:0.82rem;font-weight:600;color:var(--gold);margin-bottom:0.4rem;letter-spacing:0.04em;text-transform:uppercase;">Usage costs during trial</p>
+        <p style="font-size:0.88rem;color:rgba(245,240,232,0.8);line-height:1.55;">
+          <strong style="color:var(--cream);">$0.05 / minute</strong> — covers your phone line and AI processing costs only. You will not be charged a platform or subscription fee during the 14-day trial.
+        </p>
+      </div>
       <a href="#start" class="btn-secondary">Start Free Trial</a>
     </div>
 
@@ -1172,8 +1334,12 @@
         <li><span class="check">✓</span> Live admin dashboard & analytics</li>
         <li><span class="check">✓</span> Dedicated virtual phone number</li>
         <li><span class="check">✓</span> Priority onboarding support</li>
-        <li><span class="check">✓</span> $0.05 / min AI usage</li>
+        <li><span class="check">✓</span> $0.05 / min — phone line &amp; AI</li>
       </ul>
+      <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:0.9rem 1.1rem;margin-bottom:1.5rem;">
+        <p style="font-size:0.82rem;font-weight:600;color:var(--gold);margin-bottom:0.3rem;letter-spacing:0.04em;text-transform:uppercase;">About the $0.05/min charge</p>
+        <p style="font-size:0.85rem;color:rgba(245,240,232,0.75);line-height:1.55;">This covers both your <strong style="color:var(--cream);">virtual phone line</strong> and <strong style="color:var(--cream);">AI processing</strong> per call minute — no hidden extras.</p>
+      </div>
       <a href="#start" class="btn-primary">Get Started ↗</a>
     </div>
 
@@ -1183,14 +1349,14 @@
       <div class="pricing-price">
         <span class="price-dollar">$</span>
         <span class="price-amount">0.05</span>
-        <span class="price-period">/ min AI</span>
+        <span class="price-period">/ min</span>
       </div>
-      <div class="price-note">Usage-based, billed monthly</div>
+      <div class="price-note">Phone line + AI · billed monthly</div>
       <div class="price-divider"></div>
       <ul class="pricing-features">
-        <li><span class="check">✓</span> 100 min/mo ≈ <strong style="color:var(--cream)">$5 AI cost</strong></li>
-        <li><span class="check">✓</span> 300 min/mo ≈ <strong style="color:var(--cream)">$15 AI cost</strong></li>
-        <li><span class="check">✓</span> 600 min/mo ≈ <strong style="color:var(--cream)">$30 AI cost</strong></li>
+        <li><span class="check">✓</span> 100 min/mo ≈ <strong style="color:var(--cream)">$5 total</strong></li>
+        <li><span class="check">✓</span> 300 min/mo ≈ <strong style="color:var(--cream)">$15 total</strong></li>
+        <li><span class="check">✓</span> 600 min/mo ≈ <strong style="color:var(--cream)">$30 total</strong></li>
         <li><span class="check">✓</span> Full usage breakdown in dashboard</li>
         <li><span class="check">✓</span> No minimum commitment</li>
         <li><span class="check">✓</span> Cancel any time</li>
