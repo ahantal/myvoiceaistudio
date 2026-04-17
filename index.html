@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>myAIvoiceStudio — Autonomous Voice Receptionist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --cream: #f5f0e8;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --sage: #2d4a3e;
+    --sage-light: #3d6454;
+    --rust: #c74b2a;
+    --mist: #e8ede9;
+    --white: #ffffff;
+    --text-muted: #6b6b72;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--ink);
+    color: var(--cream);
+    overflow-x: hidden;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.6;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 5vw;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+  }
+
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--cream);
+  }
+
+  .nav-logo span { color: var(--gold); }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: rgba(245,240,232,0.6);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--cream); }
+
+  .nav-cta {
+    background: var(--gold);
+    color: var(--ink) !important;
+    padding: 0.6rem 1.4rem;
+    border-radius: 4px;
+    font-weight: 500 !important;
+    transition: background 0.2s !important;
+  }
+
+  .nav-cta:hover { background: var(--gold-light) !important; }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 10rem 5vw 6rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 60% 40%, rgba(45,74,62,0.35) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 80% 70%, rgba(201,168,76,0.1) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 10% 80%, rgba(199,75,42,0.08) 0%, transparent 60%);
+    z-index: 0;
+  }
+
+  /* animated ring */
+  .hero-ring {
+    position: absolute;
+    right: 8vw;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 480px;
+    height: 480px;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(201,168,76,0.3);
+    animation: pulse-ring 4s ease-in-out infinite;
+  }
+
+  .ring:nth-child(1) { inset: 0; animation-delay: 0s; }
+  .ring:nth-child(2) { inset: -40px; animation-delay: 0.8s; border-color: rgba(45,74,62,0.4); }
+  .ring:nth-child(3) { inset: -80px; animation-delay: 1.6s; border-color: rgba(201,168,76,0.15); }
+  .ring:nth-child(4) { inset: -120px; animation-delay: 2.4s; border-color: rgba(45,74,62,0.2); }
+
+  @keyframes pulse-ring {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.02); }
+  }
+
+  /* mic icon center */
+  .ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  .hero-content { position: relative; z-index: 1; max-width: 620px; }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(201,168,76,0.12);
+    border: 1px solid rgba(201,168,76,0.35);
+    padding: 0.4rem 1rem;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 2rem;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .badge-dot {
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 5vw, 4.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-weight: 900;
+    color: var(--cream);
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.8s 0.15s ease both;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .hero-sub {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: rgba(245,240,232,0.65);
+    max-width: 520px;
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.8s 0.3s ease both;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    animation: fadeUp 0.8s 0.45s ease both;
+  }
+
+  .btn-primary {
+    background: var(--gold);
+    color: var(--ink);
+    padding: 0.9rem 2rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-primary:hover {
+    background: var(--gold-light);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(201,168,76,0.3);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--cream);
+    padding: 0.9rem 2rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid rgba(245,240,232,0.25);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-secondary:hover {
+    border-color: rgba(245,240,232,0.5);
+    background: rgba(245,240,232,0.05);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* STATS STRIP */
+  .stats-strip {
+    background: var(--sage);
+    border-top: 1px solid rgba(201,168,76,0.2);
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+    padding: 2.5rem 5vw;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+
+  .stat {
+    text-align: center;
+    padding: 0 1rem;
+    border-right: 1px solid rgba(245,240,232,0.1);
+  }
+
+  .stat:last-child { border-right: none; }
+
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.82rem;
+    color: rgba(245,240,232,0.6);
+    margin-top: 0.4rem;
+    letter-spacing: 0.03em;
+  }
+
+  /* SECTION COMMON */
+  section { padding: 7rem 5vw; }
+
+  .section-tag {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .section-tag::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 3.5vw, 3rem);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: var(--cream);
+    margin-bottom: 1rem;
+  }
+
+  .section-title em { font-style: italic; color: var(--gold); }
+
+  .section-lead {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: rgba(245,240,232,0.6);
+    max-width: 560px;
+  }
+
+  /* PROBLEM SECTION */
+  .problem {
+    background: var(--ink);
+    position: relative;
+  }
+
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: center;
+    margin-top: 4rem;
+  }
+
+  .problem-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .problem-item {
+    display: flex;
+    gap: 1.2rem;
+    align-items: flex-start;
+    padding: 1.4rem;
+    background: rgba(245,240,232,0.03);
+    border: 1px solid rgba(245,240,232,0.07);
+    border-radius: 8px;
+    transition: border-color 0.2s;
+  }
+
+  .problem-item:hover { border-color: rgba(199,75,42,0.3); }
+
+  .problem-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    background: rgba(199,75,42,0.12);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .problem-text h4 {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--cream);
+    margin-bottom: 0.25rem;
+  }
+
+  .problem-text p {
+    font-size: 0.85rem;
+    color: rgba(245,240,232,0.5);
+    line-height: 1.5;
+  }
+
+  .problem-claim {
+    background: var(--sage);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 12px;
+    padding: 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .problem-claim::before {
+    content: '"';
+    position: absolute;
+    top: -1rem;
+    left: 1.5rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 8rem;
+    color: rgba(201,168,76,0.15);
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .problem-claim blockquote {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    line-height: 1.5;
+    font-style: italic;
+    color: var(--cream);
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .problem-claim blockquote em { color: var(--gold); }
+
+  .problem-claim cite {
+    font-size: 0.82rem;
+    color: rgba(245,240,232,0.5);
+    letter-spacing: 0.05em;
+    font-style: normal;
+    text-transform: uppercase;
+  }
+
+  /* HOW IT WORKS */
+  .how {
+    background: rgba(245,240,232,0.02);
+    border-top: 1px solid rgba(245,240,232,0.06);
+    border-bottom: 1px solid rgba(245,240,232,0.06);
+  }
+
+  .how-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-top: 4rem;
+    position: relative;
+  }
+
+  .how-steps::before {
+    content: '';
+    position: absolute;
+    top: 2.5rem;
+    left: calc(12.5% + 1rem);
+    right: calc(12.5% + 1rem);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), var(--gold), transparent);
+    opacity: 0.3;
+  }
+
+  .step {
+    background: rgba(245,240,232,0.03);
+    border: 1px solid rgba(245,240,232,0.08);
+    border-radius: 12px;
+    padding: 2rem 1.5rem;
+    position: relative;
+    transition: all 0.3s;
+  }
+
+  .step:hover {
+    background: rgba(45,74,62,0.2);
+    border-color: rgba(201,168,76,0.3);
+    transform: translateY(-4px);
+  }
+
+  .step-num {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--sage);
+    border: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .step h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--cream);
+    margin-bottom: 0.6rem;
+  }
+
+  .step p {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: rgba(245,240,232,0.5);
+  }
+
+  /* FEATURES */
+  .features { background: var(--ink); }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 4rem;
+  }
+
+  .feature-card {
+    padding: 2rem;
+    background: rgba(245,240,232,0.025);
+    border: 1px solid rgba(245,240,232,0.07);
+    border-radius: 10px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(45,74,62,0.2), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .feature-card:hover::after { opacity: 1; }
+  .feature-card:hover { border-color: rgba(201,168,76,0.25); }
+
+  .feature-icon {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .feature-card h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--cream);
+    margin-bottom: 0.5rem;
+  }
+
+  .feature-card p {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: rgba(245,240,232,0.5);
+  }
+
+  .feature-card.featured {
+    background: var(--sage);
+    border-color: rgba(201,168,76,0.35);
+    grid-column: span 1;
+  }
+
+  .feature-card.featured h3 { color: var(--gold); }
+
+  /* PRICING */
+  .pricing {
+    background: rgba(45,74,62,0.15);
+    border-top: 1px solid rgba(245,240,232,0.06);
+  }
+
+  .pricing-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 4rem;
+    align-items: start;
+  }
+
+  .pricing-usage-bar {
+    grid-column: 1 / -1;
+    background: var(--sage);
+    border: 1px solid rgba(201,168,76,0.4);
+    border-radius: 12px;
+    padding: 2rem 2.5rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .usage-bar-icon {
+    font-size: 2.2rem;
+    line-height: 1;
+  }
+
+  .usage-bar-text h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.02em;
+  }
+
+  .usage-bar-text p {
+    font-size: 0.9rem;
+    color: rgba(245,240,232,0.75);
+    line-height: 1.55;
+  }
+
+  .usage-bar-examples {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    text-align: right;
+  }
+
+  .usage-bar-examples span {
+    font-size: 0.82rem;
+    color: rgba(245,240,232,0.55);
+    white-space: nowrap;
+  }
+
+  .usage-bar-examples strong {
+    color: var(--cream);
+  }
+
+  .pricing-card {
+    background: rgba(245,240,232,0.03);
+    border: 1px solid rgba(245,240,232,0.1);
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    position: relative;
+    transition: all 0.3s;
+  }
+
+  .pricing-card.featured {
+    background: var(--sage);
+    border: 1px solid var(--gold);
+  }
+
+  .pricing-badge {
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: var(--ink);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.3rem 1rem;
+    border-radius: 0 0 6px 6px;
+    white-space: nowrap;
+  }
+
+  .pricing-name {
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(245,240,232,0.5);
+    margin-bottom: 1.2rem;
+  }
+
+  .pricing-price {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.3rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .price-dollar {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1.8;
+  }
+
+  .price-amount {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: var(--cream);
+    line-height: 1;
+  }
+
+  .price-period {
+    font-size: 0.85rem;
+    color: rgba(245,240,232,0.4);
+    line-height: 2.2;
+  }
+
+  .price-note {
+    font-size: 0.82rem;
+    color: rgba(245,240,232,0.45);
+    margin-bottom: 1.8rem;
+    min-height: 1.4rem;
+  }
+
+  .price-divider {
+    height: 1px;
+    background: rgba(245,240,232,0.1);
+    margin: 1.5rem 0;
+  }
+
+  .pricing-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    margin-bottom: 2rem;
+  }
+
+  .pricing-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    font-size: 0.875rem;
+    color: rgba(245,240,232,0.7);
+    line-height: 1.4;
+  }
+
+  .pricing-features li .check {
+    color: var(--gold);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .pricing-features li.muted { color: rgba(245,240,232,0.35); }
+  .pricing-features li.muted .check { color: rgba(245,240,232,0.2); }
+
+  .pricing-card .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pricing-card .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* USE CASES */
+  .usecases { background: var(--ink); }
+
+  .usecases-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 3rem;
+  }
+
+  .usecase {
+    padding: 1.8rem;
+    background: rgba(245,240,232,0.025);
+    border: 1px solid rgba(245,240,232,0.07);
+    border-radius: 10px;
+    transition: all 0.25s;
+    cursor: default;
+  }
+
+  .usecase:hover {
+    background: rgba(45,74,62,0.2);
+    border-color: rgba(201,168,76,0.2);
+  }
+
+  .usecase-icon { font-size: 2rem; margin-bottom: 1rem; }
+  .usecase h3 { font-size: 0.95rem; font-weight: 500; color: var(--cream); margin-bottom: 0.4rem; }
+  .usecase p { font-size: 0.82rem; color: rgba(245,240,232,0.45); line-height: 1.5; }
+
+  /* FAQ */
+  .faq { background: rgba(245,240,232,0.02); border-top: 1px solid rgba(245,240,232,0.06); }
+
+  .faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 3rem; }
+
+  .faq-item {
+    padding: 1.8rem;
+    background: rgba(245,240,232,0.025);
+    border: 1px solid rgba(245,240,232,0.07);
+    border-radius: 10px;
+  }
+
+  .faq-item h4 {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--cream);
+    margin-bottom: 0.6rem;
+  }
+
+  .faq-item p {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: rgba(245,240,232,0.5);
+  }
+
+  /* CTA SECTION */
+  .cta-section {
+    padding: 8rem 5vw;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    background: var(--sage);
+  }
+
+  .cta-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 80% at 50% 50%, rgba(201,168,76,0.12) 0%, transparent 70%);
+  }
+
+  .cta-section .section-tag { justify-content: center; }
+
+  .cta-section .section-title {
+    font-size: clamp(2.2rem, 4vw, 3.5rem);
+    text-align: center;
+    margin-bottom: 1.2rem;
+    position: relative;
+  }
+
+  .cta-section .section-lead {
+    text-align: center;
+    margin: 0 auto 2.5rem;
+    position: relative;
+  }
+
+  .cta-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    position: relative;
+    flex-wrap: wrap;
+  }
+
+  .cta-sub {
+    margin-top: 1.5rem;
+    font-size: 0.82rem;
+    color: rgba(245,240,232,0.4);
+    position: relative;
+  }
+
+  /* FOOTER */
+  footer {
+    background: var(--ink);
+    border-top: 1px solid rgba(245,240,232,0.07);
+    padding: 3rem 5vw;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--cream);
+  }
+
+  .footer-logo span { color: var(--gold); }
+
+  .footer-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .footer-links a {
+    font-size: 0.82rem;
+    color: rgba(245,240,232,0.4);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--cream); }
+
+  .footer-copy {
+    font-size: 0.78rem;
+    color: rgba(245,240,232,0.25);
+    width: 100%;
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(245,240,232,0.05);
+    margin-top: 0.5rem;
+  }
+
+  /* SCROLL REVEAL */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .problem-grid { grid-template-columns: 1fr; }
+    .how-steps { grid-template-columns: 1fr 1fr; }
+    .how-steps::before { display: none; }
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .pricing-container { grid-template-columns: 1fr; }
+    .pricing-usage-bar { grid-template-columns: 1fr; text-align: left; }
+    .usage-bar-examples { text-align: left; flex-direction: row; flex-wrap: wrap; gap: 0.6rem; }
+    .usecases-grid { grid-template-columns: 1fr 1fr; }
+    .faq-grid { grid-template-columns: 1fr; }
+    .stats-strip { grid-template-columns: repeat(2, 1fr); }
+    .hero-ring { display: none; }
+    nav .nav-links { display: none; }
+  }
+
+  @media (max-width: 600px) {
+    .features-grid { grid-template-columns: 1fr; }
+    .usecases-grid { grid-template-columns: 1fr; }
+    .stats-strip { grid-template-columns: 1fr 1fr; }
+    .how-steps { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">my<span>AI</span>voiceStudio</div>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#start" class="nav-cta">Start Free Trial</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+
+  <div class="hero-ring">
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring-center">🎙️</div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      Intelligence-as-a-Service
+    </div>
+    <h1>Your business never<br><em>misses a call</em> again.</h1>
+    <p class="hero-sub">myAIvoiceStudio is an autonomous voice receptionist that answers calls, understands intent, and books appointments — 24/7, without a single human intervention.</p>
+    <div class="hero-actions">
+      <a href="#start" class="btn-primary">Start Free — 14 Days ↗</a>
+      <a href="#how" class="btn-secondary">▶ See How It Works</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-strip">
+  <div class="stat">
+    <div class="stat-num">24/7</div>
+    <div class="stat-label">Always Available</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">&lt;1s</div>
+    <div class="stat-label">Response Latency</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">90%+</div>
+    <div class="stat-label">Booking Conversion Target</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">5 min</div>
+    <div class="stat-label">Setup to Live</div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="problem" id="problem">
+  <div class="section-tag">The Problem</div>
+  <h2 class="section-title">Every missed call is a<br><em>missed booking.</em></h2>
+
+  <div class="problem-grid">
+    <div class="problem-list reveal">
+      <div class="problem-item">
+        <div class="problem-icon">📵</div>
+        <div class="problem-text">
+          <h4>Busy Lines & After-Hours</h4>
+          <p>Calls go unanswered during peak hours or outside business times — appointments are lost forever.</p>
+        </div>
+      </div>
+      <div class="problem-item">
+        <div class="problem-icon">🤖</div>
+        <div class="problem-text">
+          <h4>IVR Frustration</h4>
+          <p>Outdated touch-tone menus frustrate callers, leading to high abandonment rates and a poor first impression.</p>
+        </div>
+      </div>
+      <div class="problem-item">
+        <div class="problem-icon">📋</div>
+        <div class="problem-text">
+          <h4>Manual Scheduling Overhead</h4>
+          <p>Staff pulled away from primary duties to handle repetitive booking calls — productivity suffers.</p>
+        </div>
+      </div>
+      <div class="problem-item">
+        <div class="problem-icon">🗓️</div>
+        <div class="problem-text">
+          <h4>Calendar Conflicts & Data Loss</h4>
+          <p>Paper notes and fragmented systems cause double-bookings, missed follow-ups, and lost customer data.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="problem-claim reveal">
+      <blockquote>
+        Every appointment a small business <em>loses on the phone</em> is direct revenue walking out the door. myAIvoiceStudio brings that loss to zero.
+      </blockquote>
+      <cite>— Core Value Proposition, myAIvoiceStudio</cite>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="section-tag">How It Works</div>
+  <h2 class="section-title">Up and running in<br><em>under 5 minutes.</em></h2>
+  <p class="section-lead">An 8-step onboarding wizard walks you from sign-up to live calls — no technical knowledge required.</p>
+
+  <div class="how-steps reveal">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Create Account</h3>
+      <p>Sign up with email or Google. Accept terms and audio recording disclosure in seconds.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Connect Calendar</h3>
+      <p>Authorize Google Calendar via OAuth. Your agent reads real-time availability and writes bookings directly.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Build Your Knowledge Base</h3>
+      <p>Enter your website URL — the system auto-scrapes your services, hours, and FAQs. Upload additional PDFs if needed.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h3>Go Live</h3>
+      <p>Forward your business number to your assigned virtual number. Test it, verify it, and your AI receptionist is live.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-tag">Platform Features</div>
+  <h2 class="section-title">Everything your receptionist<br><em>needs to perform.</em></h2>
+
+  <div class="features-grid reveal">
+    <div class="feature-card featured">
+      <div class="feature-icon">🧠</div>
+      <h3>Natural Language Understanding</h3>
+      <p>Understands intent naturally — "Do you have anything free tomorrow morning?" maps directly to a calendar query and booking flow, with no scripted keywords required.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <h3>Real-Time Google Calendar Sync</h3>
+      <p>Reads live availability, creates bookings, and uses Soft-Lock to hold slots during the conversation — preventing double-bookings.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <h3>Soft-Lock Reservation Engine</h3>
+      <p>Slots are temporarily reserved the moment a caller shows interest, then confirmed with a Hard-Lock once details are collected. 5-minute protection window included.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📚</div>
+      <h3>Auto-Learning Knowledge Base</h3>
+      <p>Scrapes your website on setup and refreshes it weekly. Upload PDFs, brochures, and price lists. OCR converts even image flyers into searchable knowledge.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎭</div>
+      <h3>Fully Customizable Persona</h3>
+      <p>Name your agent, set the greeting, choose voice tone (formal / warm / corporate), and define behavior constraints — all without writing a single prompt.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>Live Admin Dashboard</h3>
+      <p>Track total calls, successful bookings, lost opportunities, average call duration, and unknown-intent alerts — all in one real-time panel.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📝</div>
+      <h3>Full Call Transcripts</h3>
+      <p>Every call is logged with a timestamped transcript, AI-generated summary, intent analysis, and outcome classification. Filterable by date and result.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📱</div>
+      <h3>Instant Notifications</h3>
+      <p>You receive an SMS/email summary after every booking. Your customer gets an SMS confirmation with date, time, and your address — automatically.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🛡️</div>
+      <h3>Anti-Hallucination Guardrails</h3>
+      <p>The agent is instructed never to guess or fabricate answers. If it doesn't know — it says so and routes the caller to a human. No false information, ever.</p>
+    </div>
+  </div>
+</section>
+
+<!-- USE CASES -->
+<section class="usecases" id="usecases">
+  <div class="section-tag">Who It's For</div>
+  <h2 class="section-title">Built for <em>service businesses</em><br>of every kind.</h2>
+
+  <div class="usecases-grid reveal">
+    <div class="usecase">
+      <div class="usecase-icon">🏥</div>
+      <h3>Medical & Dental Clinics</h3>
+      <p>Book patient appointments, answer hours and location queries, handle multiple appointment types by duration.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">💆</div>
+      <h3>Beauty & Wellness Centers</h3>
+      <p>Manage massage, skincare, and nail bookings with service-specific durations. Handle peak hour overflow automatically.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">🏨</div>
+      <h3>Hotels & Hospitality</h3>
+      <p>Answer room type queries, capture reservation intents, and route complex requests to your front desk staff.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">🍽️</div>
+      <h3>Restaurants</h3>
+      <p>Take table reservations, answer menu and allergy questions, and inform callers of daily specials from your knowledge base.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">🔧</div>
+      <h3>Auto Service & Repair</h3>
+      <p>Book service appointments, quote lead times for common jobs, and answer availability questions 24/7.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">⚖️</div>
+      <h3>Legal & Professional Offices</h3>
+      <p>Schedule consultations, screen initial inquiries, and ensure no prospective client call goes unanswered.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="section-tag">Simple Pricing</div>
+  <h2 class="section-title">Start for free.<br><em>Pay only when you're ready.</em></h2>
+  <p class="section-lead">A 14-day free trial — no credit card required. Then a transparent, flat monthly structure with no hidden per-call surprises (except AI usage).</p>
+
+  <div class="pricing-container reveal">
+
+    <!-- Trial -->
+    <div class="pricing-card">
+      <div class="pricing-name">Free Trial</div>
+      <div class="pricing-price">
+        <span class="price-dollar">$</span>
+        <span class="price-amount">0</span>
+        <span class="price-period">/ 14 days</span>
+      </div>
+      <div class="price-note" style="color:rgba(245,240,232,0.55);">Platform free · usage costs apply (see below)</div>
+      <div class="price-divider"></div>
+      <ul class="pricing-features">
+        <li><span class="check">✓</span> Full platform access</li>
+        <li><span class="check">✓</span> Google Calendar integration</li>
+        <li><span class="check">✓</span> Auto knowledge base setup</li>
+        <li><span class="check">✓</span> Live call testing (sandbox)</li>
+        <li><span class="check">✓</span> Onboarding wizard</li>
+        <li><span class="check">✓</span> No setup fee during trial</li>
+      </ul>
+      <a href="#start" class="btn-secondary" style="width:100%;justify-content:center;display:flex;">Start Free Trial</a>
+    </div>
+
+    <!-- Pro -->
+    <div class="pricing-card featured">
+      <div class="pricing-name">Pro Plan</div>
+      <div class="pricing-price">
+        <span class="price-dollar">$</span>
+        <span class="price-amount">19.99</span>
+        <span class="price-period">/ month</span>
+      </div>
+      <div class="price-note" style="display:flex;align-items:center;gap:0.5rem;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);border-radius:6px;padding:0.6rem 1rem;color:var(--gold);font-size:0.9rem;font-weight:500;margin-bottom:1rem;">
+        <span>🔧</span> + $249 one-time setup fee
+      </div>
+      <div class="price-divider"></div>
+      <ul class="pricing-features">
+        <li><span class="check">✓</span> Everything in Free Trial</li>
+        <li><span class="check">✓</span> Custom agent name &amp; persona</li>
+        <li><span class="check">✓</span> Unlimited call transcripts</li>
+        <li><span class="check">✓</span> SMS &amp; email notifications</li>
+        <li><span class="check">✓</span> Live admin dashboard &amp; analytics</li>
+        <li><span class="check">✓</span> Dedicated virtual phone number</li>
+        <li><span class="check">✓</span> Priority onboarding support</li>
+      </ul>
+      <a href="#start" class="btn-primary" style="width:100%;justify-content:center;display:flex;">Get Started ↗</a>
+    </div>
+
+    <!-- Usage bar — full width -->
+    <div class="pricing-usage-bar">
+      <div class="usage-bar-icon">📞</div>
+      <div class="usage-bar-text">
+        <h4>$0.05 / minute — applies to both plans</h4>
+        <p>This single charge covers your <strong style="color:var(--cream);">virtual phone line</strong> and <strong style="color:var(--cream);">AI processing</strong> for every call minute. It is not an add-on — it is the only usage cost you will ever see on your bill. No hidden fees, no surprises.</p>
+      </div>
+      <div class="usage-bar-examples">
+        <span>100 min/mo ≈ <strong>$5</strong></span>
+        <span>300 min/mo ≈ <strong>$15</strong></span>
+        <span>600 min/mo ≈ <strong>$30</strong></span>
+        <span style="color:rgba(245,240,232,0.35);font-size:0.76rem;margin-top:0.3rem;">Full breakdown in dashboard</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- USE CASES -->
+<section class="usecases" id="usecases">
+  <div class="section-tag">Who It's For</div>
+  <h2 class="section-title">Built for <em>service businesses</em><br>of every kind.</h2>
+
+  <div class="usecases-grid reveal">
+    <div class="usecase">
+      <div class="usecase-icon">🏥</div>
+      <h3>Medical & Dental Clinics</h3>
+      <p>Book patient appointments, answer hours and location queries, handle multiple appointment types by duration.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">💆</div>
+      <h3>Beauty & Wellness Centers</h3>
+      <p>Manage massage, skincare, and nail bookings with service-specific durations. Handle peak hour overflow automatically.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">🏨</div>
+      <h3>Hotels & Hospitality</h3>
+      <p>Answer room type queries, capture reservation intents, and route complex requests to your front desk staff.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">🍽️</div>
+      <h3>Restaurants</h3>
+      <p>Take table reservations, answer menu and allergy questions, and inform callers of daily specials from your knowledge base.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">🔧</div>
+      <h3>Auto Service & Repair</h3>
+      <p>Book service appointments, quote lead times for common jobs, and answer availability questions 24/7.</p>
+    </div>
+    <div class="usecase">
+      <div class="usecase-icon">⚖️</div>
+      <h3>Legal & Professional Offices</h3>
+      <p>Schedule consultations, screen initial inquiries, and ensure no prospective client call goes unanswered.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="section-tag">Simple Pricing</div>
+  <h2 class="section-title">Start for free.<br><em>Pay only when you're ready.</em></h2>
+  <p class="section-lead">A 14-day free trial — no credit card required. Then a transparent, flat monthly structure with no hidden per-call surprises (except AI usage).</p>
+
+  <div class="pricing-container reveal">
+
+    <!-- Trial -->
+    <div class="pricing-card">
+      <div class="pricing-name">Free Trial</div>
+      <div class="pricing-price">
+        <span class="price-dollar">$</span>
+        <span class="price-amount">0</span>
+        <span class="price-period">/ 14 days</span>
+      </div>
+      <div class="price-note" style="color:rgba(245,240,232,0.55);">Platform free · usage costs below apply</div>
+      <div class="price-divider"></div>
+      <ul class="pricing-features">
+        <li><span class="check">✓</span> Full platform access</li>
+        <li><span class="check">✓</span> Google Calendar integration</li>
+        <li><span class="check">✓</span> Auto knowledge base setup</li>
+        <li><span class="check">✓</span> Live call testing (sandbox)</li>
+        <li><span class="check">✓</span> Onboarding wizard</li>
+        <li><span class="check">✓</span> No setup fee during trial</li>
+      </ul>
+      <div style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.35);border-radius:8px;padding:1rem 1.1rem;margin-bottom:1.5rem;">
+        <p style="font-size:0.82rem;font-weight:600;color:var(--gold);margin-bottom:0.4rem;letter-spacing:0.04em;text-transform:uppercase;">Usage costs during trial</p>
+        <p style="font-size:0.88rem;color:rgba(245,240,232,0.8);line-height:1.55;">
+          <strong style="color:var(--cream);">$0.05 / minute</strong> — covers your phone line and AI processing costs only. You will not be charged a platform or subscription fee during the 14-day trial.
+        </p>
+      </div>
+      <a href="#start" class="btn-secondary">Start Free Trial</a>
+    </div>
+
+    <!-- Pro (featured) -->
+    <div class="pricing-card featured">
+      <div class="pricing-badge">Most Popular</div>
+      <div class="pricing-name">Pro Plan</div>
+      <div class="pricing-price">
+        <span class="price-dollar">$</span>
+        <span class="price-amount">19.99</span>
+        <span class="price-period">/ month</span>
+      </div>
+      <div class="price-note" style="display:flex;align-items:center;gap:0.5rem;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);border-radius:6px;padding:0.6rem 1rem;color:var(--gold);font-size:0.9rem;font-weight:500;margin-bottom:1rem;">
+        <span>🔧</span> + $249 one-time setup fee
+      </div>
+      <div class="price-divider"></div>
+      <ul class="pricing-features">
+        <li><span class="check">✓</span> Everything in Free Trial</li>
+        <li><span class="check">✓</span> Custom agent name & persona</li>
+        <li><span class="check">✓</span> Unlimited call transcripts</li>
+        <li><span class="check">✓</span> SMS & email notifications</li>
+        <li><span class="check">✓</span> Live admin dashboard & analytics</li>
+        <li><span class="check">✓</span> Dedicated virtual phone number</li>
+        <li><span class="check">✓</span> Priority onboarding support</li>
+        <li><span class="check">✓</span> $0.05 / min — phone line &amp; AI</li>
+      </ul>
+      <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:0.9rem 1.1rem;margin-bottom:1.5rem;">
+        <p style="font-size:0.82rem;font-weight:600;color:var(--gold);margin-bottom:0.3rem;letter-spacing:0.04em;text-transform:uppercase;">About the $0.05/min charge</p>
+        <p style="font-size:0.85rem;color:rgba(245,240,232,0.75);line-height:1.55;">This covers both your <strong style="color:var(--cream);">virtual phone line</strong> and <strong style="color:var(--cream);">AI processing</strong> per call minute — no hidden extras.</p>
+      </div>
+      <a href="#start" class="btn-primary">Get Started ↗</a>
+    </div>
+
+    <!-- What's included detail -->
+    <div class="pricing-card">
+      <div class="pricing-name">What You Pay</div>
+      <div class="pricing-price">
+        <span class="price-dollar">$</span>
+        <span class="price-amount">0.05</span>
+        <span class="price-period">/ min</span>
+      </div>
+      <div class="price-note">Phone line + AI · billed monthly</div>
+      <div class="price-divider"></div>
+      <ul class="pricing-features">
+        <li><span class="check">✓</span> 100 min/mo ≈ <strong style="color:var(--cream)">$5 total</strong></li>
+        <li><span class="check">✓</span> 300 min/mo ≈ <strong style="color:var(--cream)">$15 total</strong></li>
+        <li><span class="check">✓</span> 600 min/mo ≈ <strong style="color:var(--cream)">$30 total</strong></li>
+        <li><span class="check">✓</span> Full usage breakdown in dashboard</li>
+        <li><span class="check">✓</span> No minimum commitment</li>
+        <li><span class="check">✓</span> Cancel any time</li>
+        <li class="muted"><span class="check">ℹ</span> Setup fee waived during launch promo</li>
+      </ul>
+      <a href="#faq" class="btn-secondary">See FAQ</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="section-tag">FAQ</div>
+  <h2 class="section-title">Common <em>questions</em> answered.</h2>
+
+  <div class="faq-grid reveal">
+    <div class="faq-item">
+      <h4>Do I need to change my business phone number?</h4>
+      <p>No. You keep your existing number. You simply set up a call-forward in your carrier's settings to route calls to your myAIvoiceStudio virtual number. We provide step-by-step instructions per carrier during onboarding.</p>
+    </div>
+    <div class="faq-item">
+      <h4>What happens if the agent doesn't know an answer?</h4>
+      <p>The agent is designed to never fabricate answers. If the information isn't in your knowledge base, it will tell the caller it doesn't know and offer to connect them to a human or provide your direct line.</p>
+    </div>
+    <div class="faq-item">
+      <h4>Can the agent handle multiple appointment types?</h4>
+      <p>Yes. You define each service (e.g., "60-minute Deep Tissue" or "30-minute Consultation") during setup. The agent automatically applies the correct duration when booking and will ask if the caller is unsure.</p>
+    </div>
+    <div class="faq-item">
+      <h4>What if two customers call for the same slot simultaneously?</h4>
+      <p>Our Soft-Lock mechanism temporarily reserves a slot the moment a caller shows interest. This prevents double-bookings during live conversations. Conflict events are logged in your dashboard as "Lost Opportunities."</p>
+    </div>
+    <div class="faq-item">
+      <h4>Is my customers' data safe? What about recording consent?</h4>
+      <p>All call recordings and transcripts are encrypted and isolated per account. A consent notification is played at the start of each call. Customer names and phone numbers are stored in encrypted form, never in plain text.</p>
+    </div>
+    <div class="faq-item">
+      <h4>Can I turn the agent off temporarily?</h4>
+      <p>Absolutely. A single toggle in your dashboard deactivates the agent instantly. Calls will fall through to your original number. Any active call in progress is allowed to complete before the toggle takes effect.</p>
+    </div>
+    <div class="faq-item">
+      <h4>How is the $0.05/min AI cost calculated?</h4>
+      <p>The AI cost covers speech recognition, language model processing, and text-to-speech for the duration of each call. A typical 3-minute booking call costs roughly $0.15. Your monthly bill is your subscription plus total AI minutes used.</p>
+    </div>
+    <div class="faq-item">
+      <h4>What's included in the $249 setup fee?</h4>
+      <p>The one-time setup fee covers dedicated virtual number provisioning, guided onboarding support, initial knowledge base configuration assistance, and integration verification with your Google Calendar and phone carrier.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="start">
+  <div class="section-tag" style="justify-content:center;">Get Started Today</div>
+  <h2 class="section-title" style="text-align:center;">Your AI receptionist is<br><em>ready to answer.</em></h2>
+  <p class="section-lead" style="text-align:center; margin:0 auto 2.5rem;">Start your 14-day free trial today — no credit card, no commitment. Be live in under 5 minutes.</p>
+  <div class="cta-actions">
+    <a href="#" class="btn-primary" style="font-size:1rem; padding: 1rem 2.5rem;">Start Free Trial — 14 Days ↗</a>
+    <a href="mailto:hello@myaivoicestudio.com" class="btn-secondary" style="font-size:1rem; padding: 1rem 2.5rem;">Talk to Sales</a>
+  </div>
+  <p class="cta-sub" style="font-size:0.95rem;color:rgba(245,240,232,0.65);margin-top:1.5rem;">
+    $0 for 14 days &nbsp;·&nbsp; Then <strong style="color:var(--cream);">$19.99/mo</strong> &nbsp;·&nbsp; <strong style="color:var(--gold);">$249 one-time setup fee</strong> &nbsp;·&nbsp; $0.05/min AI &nbsp;·&nbsp; Cancel anytime
+  </p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">my<span>AI</span>voiceStudio</div>
+  <ul class="footer-links">
+    <li><a href="#">Privacy Policy</a></li>
+    <li><a href="#">Terms of Service</a></li>
+    <li><a href="#">Data Processing Agreement</a></li>
+    <li><a href="mailto:hello@myaivoicestudio.com">Contact</a></li>
+  </ul>
+  <p class="footer-copy">© 2025 myAIvoiceStudio. All rights reserved. An Intelligence-as-a-Service platform for service businesses.</p>
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.12 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Stagger children of revealed elements
+  document.querySelectorAll('.problem-list, .how-steps, .features-grid, .usecases-grid, .faq-grid').forEach(container => {
+    Array.from(container.children).forEach((child, i) => {
+      child.style.transitionDelay = `${i * 0.08}s`;
+      child.classList.add('reveal');
+      observer.observe(child);
+    });
+    container.classList.remove('reveal');
+  });
+</script>
+
+</body>
+</html>
